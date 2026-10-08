@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 // Owner: คนที่ 3 (Menu & Game Logic)
@@ -5,48 +7,70 @@ public class GameSession {
 
     private User user;
     private Difficulty difficulty;
-    private PhotoPair pair;              // คู่ภาพเดียวที่สุ่มมาจากคลังรวม
-    private List<DifferenceSpot> activeSpots; // จุดย่อยที่เลือกมาให้หารอบนี้ (ขนาด = difficulty.getSpotCount())
+    private PhotoPair pair;              
+    private List<DifferenceSpot> activeSpots; 
     private int foundCount;
     private int misses;
     private int timeRemaining;
 
     public GameSession(User user, Difficulty difficulty) {
-        // TODO:
-        // 1) pair = สุ่มหยิบ 1 คู่จากคลังภาพรวม (เช่น โฟลเดอร์ images/pool/*)
-        // 2) activeSpots = สุ่มเลือกจำนวน difficulty.getSpotCount() จาก pair.getAllSpots()
-        // 3) timeRemaining = difficulty.getSeconds()
+        this.user = user;
+        this.difficulty = difficulty;
+        this.foundCount = 0;
+        this.misses = 0;
+        this.timeRemaining = difficulty.getSeconds();
+
+        // 1) สุ่มหยิบ 1 คู่จากคลังภาพ (รอเมธอดจริงจากคนที่ 4)
+        // สมมติคนที่ 4 สร้างเมธอด loadRandomFromPool() ไว้ให้
+        this.pair = PhotoPair.loadFromFolder("images/"); 
+        
+        // 2) ดึงจุดทั้งหมดมาสุ่มเลือกตามจำนวนความยาก
+        List<DifferenceSpot> allSpots = pair.getAllSpots();
+        Collections.shuffle(allSpots); // สลับตำแหน่งจุดทั้งหมด
+        
+        // ตัดเอาเฉพาะจำนวนที่ต้องการตาม Difficulty
+        int countToPick = Math.min(difficulty.getSpotCount(), allSpots.size());
+        this.activeSpots = new ArrayList<>(allSpots.subList(0, countToPick));
     }
 
     public PhotoPair getPair() {
-        return null; // TODO
+        return pair;
     }
 
     public List<DifferenceSpot> getActiveSpots() {
-        return null; // TODO
+        return activeSpots;
     }
 
+    // ตรวจสอบเมื่อมีการคลิก (คนที่ 4 จะเรียกฟังก์ชันนี้จาก GameFrame)
     public boolean handleClick(int x, int y) {
-        return false; // TODO: เช็กเฉพาะใน activeSpots เท่านั้น (จุดอื่นในภาพที่ไม่ได้ถูกเลือกไม่ต้องนับ)
+        // วนหาว่าคลิกโดนจุดไหนใน activeSpots ไหม
+        for (DifferenceSpot spot : activeSpots) {
+            if (spot.contains(x, y)) {
+                if (!spot.isFound()) { // ถ้ายังไม่เคยหาเจอ
+                    spot.markFound();
+                    foundCount++;
+                    return true; // คลิกโดนและถูกต้อง
+                }
+                return false; // คลิกโดนจุดที่เคยเจอแล้ว
+            }
+        }
+        // ถ้าวนจบแล้วไม่โดนจุดไหนเลย แสดงว่าพลาด
+        misses++;
+        return false; 
     }
 
     public void tick() {
-        // TODO: timeRemaining--
+        if (timeRemaining > 0) {
+            timeRemaining--;
+        }
     }
 
     public boolean isRoundComplete() {
-        return false; // TODO: ทุกจุดใน activeSpots ถูกหาเจอหมดหรือยัง
+        // เช็คว่าหาเจอครบตามจำนวนที่ตั้งไว้หรือยัง
+        return foundCount >= difficulty.getSpotCount(); 
     }
 
-    public int getFoundCount() {
-        return foundCount; // TODO
-    }
-
-    public int getMisses() {
-        return misses; // TODO
-    }
-
-    public int getTimeRemaining() {
-        return timeRemaining; // TODO
-    }
+    public int getFoundCount() { return foundCount; }
+    public int getMisses() { return misses; }
+    public int getTimeRemaining() { return timeRemaining; }
 }

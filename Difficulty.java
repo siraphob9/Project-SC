@@ -1,18 +1,23 @@
 // Owner: คนที่ 3 (Menu & Game Logic)
-// เปลี่ยนจาก "จำนวนภาพ" เป็น "จำนวนจุดต่างที่ต้องหาให้เจอ" ในคู่ภาพเดียวที่สุ่มมา
 public enum Difficulty {
-    EASY,
-    MEDIUM,
-    HARD;
+    EASY(5, 60),    // Easy: หา 5 จุด, เวลา 60 วินาที
+    NORMAL(7, 90),  // Normal: หา 7 จุด, เวลา 90 วินาที
+    HARD(9, 120);   // Hard: หา 9 จุด, เวลา 120 วินาที
 
-    // TODO: กำหนดจำนวนจุดและเวลาของแต่ละระดับ เช่น
-    // EASY(3, 60), MEDIUM(5, 90), HARD(8, 120);
+    private final int spotCount;
+    private final int seconds;
+
+    // Constructor รับค่าจาก Enum ด้านบน
+    Difficulty(int spotCount, int seconds) {
+        this.spotCount = spotCount;
+        this.seconds = seconds;
+    }
 
     public int getSpotCount() {
-        return 0; // TODO: จำนวนจุดต่างที่ต้องหาในรอบนี้
+        return spotCount;
     }
 
     public int getSeconds() {
-        return 0; // TODO
+        return seconds;
     }
 }
