@@ -1,18 +1,19 @@
-// Owner: คนที่ 1 (Authentication)
+// Owner: นายวชิรวิทย์ กตกุลบัญชร (Authentication)
 public class User {
 
     private String username;
     private String password;
 
     public User(String username, String password) {
-        // TODO
+        this.username = username;
+        this.password = password;
     }
 
     public String getUsername() {
-        return null; // TODO
+        return username;
     }
 
     public String getPassword() {
-        return null; // TODO
+        return password;
     }
 }
