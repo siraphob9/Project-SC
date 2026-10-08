@@ -1,15 +1,6 @@
-package photohunt.ui;
-
-import  photohunt.model.DifferenceSpot;
-import photohunt.model.GameSession;
-import photohunt.model.PhotoPair;
-
-import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
-import java.io.File;
-import java.io.IOException;
 import javax.swing.*;
 
 public class GameFrame extends JFrame {
@@ -20,6 +11,7 @@ public class GameFrame extends JFrame {
     private JLabel foundLabel;
     private JLabel missLabel;
     private Timer timer;
+    private boolean resultOpened = false ;
 
     public GameFrame(GameSession session) {
         this.session = session;
@@ -60,38 +52,27 @@ public class GameFrame extends JFrame {
     }
 
     /** TODO: โหลดภาพ session.getCurrentPair() (ImageIO.read จากไฟล์) แสดงบน panel ทั้งสองฝั่ง */
-    public void displayLevel() { 
-        PhotoPair pair = session.getCurrentPair();
-        try{
-            BufferedImage img1 = ImageIO.read(new File(pair.getImage1Path()));
-            BufferedImage img2 = ImageIO.read(new File(pair.getImage2Path()));
-            leftPanel.setImage(img1);
-            rightPanel.setImage(img2);
-            leftPanel.setSpots(pair.getSpots());
-            rightPanel.setSpots(pair.getSpots());
-        }
-        catch(IOException e){
-            JOptionPane.showMessageDialog(this, "Picture is not loaded "+ e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        }
+    public void displayLevel() {
+        PhotoPair pair = session.getPair();
+        leftPanel.setImage(pair.getLeft());
+        rightPanel.setImage(pair.getRight());
+        leftPanel.setSpots(session.getActiveSpots());
+        rightPanel.setSpots(session.getActiveSpots());
         updateDisplay();
-   }     
+    }
     /** TODO: ส่งพิกัดคลิกให้ session.handleClick แล้ว updateDisplay */
     public void handleClick(int x, int y) {
+        if(resultOpened) return;
         session.handleClick(x, y);
         updateDisplay();
-        if(session.isFinished()){
-            timer.stop();
+        if(session.isRoundComplete()){
             openResult();
         }
-        else if(session.isLevelComplete()){
-            session.nextPair();
-            displayLevel();
-        }
-     }
+    }
 
     /** TODO: อัปเดตเวลา / จุดที่เจอ / วงกลมทับจุดที่เจอ */
     public void updateDisplay() {
-        int total = session.getCurrentPair().getSpots().size();
+        int total = session.getActiveSpots().size();
         timeLabel.setText("Time left: " + session.getTimeRemaining() + " s");
         foundLabel.setText("Founded: " + session.getFoundCount() + " / " + total);
         missLabel.setText("Misses: " + session.getMisses());
@@ -100,8 +81,12 @@ public class GameFrame extends JFrame {
      }
      
     public void openResult() {
+        if(resultOpened) return;
+        resultOpened = true ;
         timer.stop();
-        new ResultScoreboardFrame(session.toResult()).setVisible(true);
+        GameResult result = session.toResult();
+        new CSVManager().writeScore(result);
+        new ResultScoreboardFrame(result, session.getUser()).setVisible(true);
         dispose();
     }
 
@@ -134,5 +119,36 @@ public class GameFrame extends JFrame {
         void setSpots(java.util.List<DifferenceSpot> spots){
             this.spots = spots;
         }
+    
+    @Override 
+    protected void paintComponent(Graphics g){
+        super.paintComponent(g);
+        if(image == null)
+            return ;
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        scale = Math.min((double) getWidth() / image.getWidth(),(double) getHeight() / image.getHeight());
+        int w = (int) (image.getWidth() * scale);
+        int h = (int) (image.getHeight() * scale);
+        offX = (getWidth() - w) / 2;
+        offY = (getHeight() - h) / 2;
+        g2.drawImage(image, offX, offY, w, h, null);
+
+        if(spots != null){
+            g2.setColor(Color.RED);
+            g2.setStroke(new BasicStroke(3f));
+            for(DifferenceSpot s : spots){
+                if(!s.isFound())
+                    continue;
+                int r = (int) Math.round(s.getRadius() * scale);
+                int cx = offX + (int) Math.round(s.getX() * scale);
+                int cy = offY + (int) Math.round(s.getY() * scale);
+                g2.drawOval(cx - r, cy - r, 2 * r, 2 * r);
+            }
+        }
+        g2.dispose();
     }
+  }
 }

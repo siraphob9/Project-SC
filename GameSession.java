@@ -22,7 +22,8 @@ public class GameSession {
 
         // 1) สุ่มหยิบ 1 คู่จากคลังภาพ (รอเมธอดจริงจากคนที่ 4)
         // สมมติคนที่ 4 สร้างเมธอด loadRandomFromPool() ไว้ให้
-        this.pair = PhotoPair.loadFromFolder("images/"); 
+        String diffFolder = difficulty.name().toLowerCase();
+        this.pair = PhotoPair.loadFromFolder("photos/" + diffFolder + "/pair01/"); 
         
         // 2) ดึงจุดทั้งหมดมาสุ่มเลือกตามจำนวนความยาก
         List<DifferenceSpot> allSpots = pair.getAllSpots();
@@ -47,7 +48,7 @@ public class GameSession {
         for (DifferenceSpot spot : activeSpots) {
             if (spot.contains(x, y)) {
                 if (!spot.isFound()) { // ถ้ายังไม่เคยหาเจอ
-                    spot.markFound();
+                    spot.setFound(true);
                     foundCount++;
                     return true; // คลิกโดนและถูกต้อง
                 }
@@ -73,4 +74,12 @@ public class GameSession {
     public int getFoundCount() { return foundCount; }
     public int getMisses() { return misses; }
     public int getTimeRemaining() { return timeRemaining; }
+
+    public User getUser(){ return  user; }
+
+    public GameResult toResult(){
+        int timeUsed = difficulty.getSeconds() - timeRemaining;
+        int score = Math.max(0, foundCount * 100 - misses * 10 + timeRemaining);
+        return new GameResult(user.getUsername(), difficulty, score, timeUsed);
+    }
 }

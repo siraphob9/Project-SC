@@ -10,9 +10,12 @@ import javax.swing.border.EmptyBorder;
 
 public class ResultScoreboardFrame extends JFrame {
 
+    private static final int TOP_COUNT = 5;
+
     private GameResult result;
     private CSVManager csvManager;
     private User user;
+    private JPanel root;
 
     public ResultScoreboardFrame(GameResult result, User user) {
         super("PhotoHunt - Result");
@@ -21,7 +24,7 @@ public class ResultScoreboardFrame extends JFrame {
         this.csvManager = new CSVManager();
 
 
-        JPanel root = new JPanel();
+        root = new JPanel();
         root.setLayout(new BoxLayout(root, BoxLayout.Y_AXIS));
         root.setBackground(Color.white);
         root.setBorder(new EmptyBorder(40,60,40,60));
@@ -47,7 +50,7 @@ public class ResultScoreboardFrame extends JFrame {
         JButton playAgain = buildButton("Play again");
         playAgain.addActionListener(e->{
             dispose();
-            new GameFrame(new GameSession(user, result.getDifficulty()), result.getPlayerName()).setVisible(true);
+            new GameFrame(new GameSession(user, result.getDifficulty())).setVisible(true);
         });
         root.add(playAgain);
         root.add(Box.createVerticalStrut(14));
