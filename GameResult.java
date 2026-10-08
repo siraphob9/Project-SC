@@ -1,4 +1,4 @@
-// Owner: คนที่ 2 (Data & Result)
+
 public class GameResult {
 
     private String playerName;
@@ -7,22 +7,25 @@ public class GameResult {
     private int timeUsed;
 
     public GameResult(String playerName, Difficulty difficulty, int score, int timeUsed) {
-        // TODO
+        this.playerName = playerName;
+        this.difficulty = difficulty;
+        this.score = score;
+        this.timeUsed = timeUsed;
     }
 
     public String getPlayerName() {
-        return null; // TODO
+        return playerName;
     }
 
     public Difficulty getDifficulty() {
-        return null; // TODO
+        return difficulty;
     }
 
     public int getScore() {
-        return 0; // TODO
+        return score;
     }
 
     public int getTimeUsed() {
-        return 0; // TODO
+        return timeUsed;
     }
 }
