@@ -1,15 +1,22 @@
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.io.File;
+import java.util.Arrays;
 
 // Owner: คนที่ 3 (Menu & Game Logic)
 public class GameSession {
 
     private User user;
     private Difficulty difficulty;
-    private PhotoPair pair;              
-    private List<DifferenceSpot> activeSpots; 
+    private List<PhotoPair> pairs;
+
+    private int pairIndex; 
+    private PhotoPair pair;      
+    private List<DifferenceSpot> activeSpots;
+
     private int foundCount;
+    private int roundFound;
     private int misses;
     private int timeRemaining;
 
@@ -18,21 +25,66 @@ public class GameSession {
         this.difficulty = difficulty;
         this.foundCount = 0;
         this.misses = 0;
+        this.pairs = loadPairs(difficulty);
         this.timeRemaining = difficulty.getSeconds();
 
-        // 1) สุ่มหยิบ 1 คู่จากคลังภาพ (รอเมธอดจริงจากคนที่ 4)
-        // สมมติคนที่ 4 สร้างเมธอด loadRandomFromPool() ไว้ให้
-        String diffFolder = difficulty.name().toLowerCase();
-        this.pair = PhotoPair.loadFromFolder("photos/" + diffFolder + "/pair01/"); 
-        
-        // 2) ดึงจุดทั้งหมดมาสุ่มเลือกตามจำนวนความยาก
-        List<DifferenceSpot> allSpots = pair.getAllSpots();
-        Collections.shuffle(allSpots); // สลับตำแหน่งจุดทั้งหมด
-        
-        // ตัดเอาเฉพาะจำนวนที่ต้องการตาม Difficulty
-        int countToPick = Math.min(difficulty.getSpotCount(), allSpots.size());
-        this.activeSpots = new ArrayList<>(allSpots.subList(0, countToPick));
+        setupPair(0);
     }
+
+        private static List<PhotoPair> loadPairs(Difficulty d){
+            String level = (d == Difficulty.NORMAL) ? "normal" : d.name().toLowerCase();
+            File levelDir = new File("photos/" + level);
+            File[] folders = levelDir.listFiles(File::isDirectory);
+            if(folders == null || folders.length == 0){
+                throw new IllegalStateException("Folder is empty: " + levelDir.getAbsolutePath());
+            }
+            Arrays.sort(folders);
+
+            List<PhotoPair> result = new ArrayList<>();
+            for(File f : folders){
+                PhotoPair p = PhotoPair.loadFromFolder(f.getPath());
+                if(p != null){
+                    result.add(p);
+                }
+            }
+            if(result.isEmpty()){
+                throw new IllegalStateException("Loading photo error please check folder " + levelDir.getAbsolutePath());
+            }
+            return result;
+        }
+
+        private void setupPair(int index){
+            this.pairIndex = index;
+            this.pair = pairs.get(index);
+            this.roundFound = 0;
+
+            List<DifferenceSpot> allSpots = new ArrayList<>(pair.getAllSpots());
+            Collections.shuffle(allSpots);
+            int countToPick = Math.min(difficulty.getSpotCount(), allSpots.size());
+            this.activeSpots = new ArrayList<>(allSpots.subList(0, countToPick));
+        }
+
+        public boolean hasNextPair(){
+            return pairIndex + 1 < pairs.size();
+        }
+
+        public void nextPair(){
+            if(hasNextPair()){
+                setupPair(pairIndex + 1);
+            }
+        }
+
+        public boolean isFinished(){
+            return isRoundComplete() && !hasNextPair();
+        }
+
+        public int getPairNumber() {
+            return pairIndex + 1 ;
+        }
+        public int getPairCount() {
+            return pairs.size();
+        }
+    
 
     public PhotoPair getPair() {
         return pair;
@@ -50,6 +102,7 @@ public class GameSession {
                 if (!spot.isFound()) { // ถ้ายังไม่เคยหาเจอ
                     spot.setFound(true);
                     foundCount++;
+                    roundFound++;
                     return true; // คลิกโดนและถูกต้อง
                 }
                 return false; // คลิกโดนจุดที่เคยเจอแล้ว
@@ -68,14 +121,16 @@ public class GameSession {
 
     public boolean isRoundComplete() {
         // เช็คว่าหาเจอครบตามจำนวนที่ตั้งไว้หรือยัง
-        return foundCount >= difficulty.getSpotCount(); 
+        return roundFound >= activeSpots.size();
     }
 
     public int getFoundCount() { return foundCount; }
+    public int getRoundFound() { return roundFound;}
     public int getMisses() { return misses; }
     public int getTimeRemaining() { return timeRemaining; }
 
     public User getUser(){ return  user; }
+    public Difficulty getDifficulty() { return difficulty;}
 
     public GameResult toResult(){
         int timeUsed = difficulty.getSeconds() - timeRemaining;
