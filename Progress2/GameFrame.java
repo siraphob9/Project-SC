@@ -7,11 +7,13 @@ public class GameFrame extends JFrame {
     private GameSession session;
     private ImagePanel leftPanel;
     private ImagePanel rightPanel;
+    private JLabel roundLabel;
     private JLabel timeLabel;
     private JLabel foundLabel;
     private JLabel missLabel;
     private Timer timer;
     private boolean resultOpened = false ;
+    private boolean transitioning = false;
 
     public GameFrame(GameSession session) {
         this.session = session;
@@ -20,12 +22,14 @@ public class GameFrame extends JFrame {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
+
         // TODO: สร้าง UI (2 panel แสดงรูป, label เวลา/คะแนน/พลาด) + Timer
-        JPanel top = new JPanel(new GridLayout(1, 3));
+        JPanel top = new JPanel(new GridLayout(1, 4));
+        roundLabel = new JLabel("", SwingConstants.CENTER);
         timeLabel = new JLabel("", SwingConstants.CENTER);
         foundLabel = new JLabel("", SwingConstants.CENTER);
         missLabel = new JLabel("", SwingConstants.CENTER);
-        for(JLabel l : new JLabel[]{timeLabel, foundLabel, missLabel}){
+        for(JLabel l : new JLabel[]{roundLabel, timeLabel, foundLabel, missLabel}){
             l.setFont(l.getFont().deriveFont(Font.BOLD, 16f));
             top.add(l);
         }
@@ -62,19 +66,32 @@ public class GameFrame extends JFrame {
     }
     /** TODO: ส่งพิกัดคลิกให้ session.handleClick แล้ว updateDisplay */
     public void handleClick(int x, int y) {
-        if(resultOpened) return;
+        if(resultOpened || transitioning) return;
         session.handleClick(x, y);
         updateDisplay();
+
         if(session.isRoundComplete()){
-            openResult();
+            transitioning = true ;
+            javax.swing.Timer wait = new javax.swing.Timer(1200, e -> {
+                transitioning = false;
+                if(session.hasNextPair()){
+                    session.nextPair();
+                    displayLevel();
+                }else {
+                    openResult();
+                }
+            });
+            wait.setRepeats(false);
+            wait.start();
         }
     }
 
     /** TODO: อัปเดตเวลา / จุดที่เจอ / วงกลมทับจุดที่เจอ */
     public void updateDisplay() {
         int total = session.getActiveSpots().size();
+        roundLabel.setText("Image: " + session.getPairNumber() + "/" + session.getPairCount());
         timeLabel.setText("Time left: " + session.getTimeRemaining() + " s");
-        foundLabel.setText("Founded: " + session.getFoundCount() + " / " + total);
+        foundLabel.setText("Founded: " + session.getRoundFound() + " / " + total);
         missLabel.setText("Misses: " + session.getMisses());
         leftPanel.repaint();
         rightPanel.repaint();
