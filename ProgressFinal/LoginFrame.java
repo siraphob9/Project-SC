@@ -15,7 +15,7 @@ public class LoginFrame extends JFrame { // สร้างคลาส LoginFra
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // ปิดโปรแกรมเมื่อกดกากบาท
 
         usernameField = new LoginFrame.HintTextField("username"); // สร้างช่องกรอกชื่อพร้อมคำใบ้ลางๆ
-        passwordField = new LoginFrame.HintPasswordField("password"); // สร้างช่องกรอกรหัสพร้อมคำใบ้ลางๆ
+        passwordField = new RegisterFrame.HintPasswordField("password"); // สร้างช่องกรอกรหัสพร้อมคำใบ้ลางๆ
         JButton loginButton = new JButton("Login"); // สร้างปุ่ม Login
         JButton registerButton = new JButton("sign up"); // สร้างปุ่ม sign up
         JButton guestButton = new JButton("Play as Guest"); // สร้างปุ่มเล่นแบบ Guest

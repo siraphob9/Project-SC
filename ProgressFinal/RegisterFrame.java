@@ -28,7 +28,7 @@ public class RegisterFrame extends JFrame { // สร้างคลาสหน
             String password = new String(passwordField.getPassword()); // อ่านรหัสผ่านจากช่องกรอกแล้วแปลงจากชุดตัวอักษรเป็นข้อความ
             String confirmation = new String(confirmPasswordField.getPassword()); // อ่านรหัสผ่านที่กรอกซ้ำในช่องยืนยันแล้วแปลงเป็นข้อความ
             if (!password.equals(confirmation)) { // ตรวจว่ารหัสผ่านกับรหัสยืนยันไม่ตรงกันหรือไม่
-                JOptionPane.showMessageDialog(this, "รหัสผ่านและรหัสยืนยันไม่ตรงกัน", // เตรียมแสดงข้อความเตือนว่ารหัสผ่านทั้งสองช่องไม่ตรงกัน
+                JOptionPane.showMessageDialog(this, "password do not match", // เตรียมแสดงข้อความเตือนว่ารหัสผ่านทั้งสองช่องไม่ตรงกัน
                         "Sign up", JOptionPane.WARNING_MESSAGE); // ตั้งชื่อกล่องข้อความเป็น Sign up และแสดงสัญลักษณ์คำเตือน
                 return; // หยุดคำสั่งในเหตุการณ์นี้ทันที โดยไม่ทำบรรทัดถัดไป
             } // จบส่วนคำสั่งนี้
@@ -60,26 +60,28 @@ public class RegisterFrame extends JFrame { // สร้างคลาสหน
     // ตรวจและบันทึกในจุดเดียว เพื่อไม่ให้ข้อมูลที่ไม่ผ่านถูกเขียนลง CSV
     static boolean registerAccount(CSVManager csv, String username, String password) { // รับตัวจัดการไฟล์ ชื่อ และรหัส
         if (username == null || username.trim().isEmpty()) { // ถ้าชื่อว่าง ให้หยุดสมัคร
-            throw new IllegalArgumentException("กรุณากรอกชื่อผู้ใช้"); // ส่งข้อความเตือนเรื่องชื่อ
+            throw new IllegalArgumentException("Please enter a username"); // ส่งข้อความเตือนเรื่องชื่อ
         } // จบการตรวจชื่อว่าง
         if (password == null || password.trim().isEmpty()) { // ถ้ารหัสว่าง ให้หยุดสมัคร
-            throw new IllegalArgumentException("กรุณากรอกรหัสผ่าน"); // ส่งข้อความเตือนเรื่องรหัส
+            throw new IllegalArgumentException("Please enter a password"); // ส่งข้อความเตือนเรื่องรหัส
         } // จบการตรวจรหัสว่าง
-
+        if(password.length() < 8){
+            throw new IllegalArgumentException("password too short");
+        }
         // ── ห้ามภาษาไทย: ตรวจตัวอักษรจริงทีละตัวก่อนบันทึก ──
         for (int i = 0; i < password.length(); i++) { // วนตั้งแต่ตัวแรกจนถึงตัวสุดท้าย
             char letter = password.charAt(i); // อ่านตัวอักษรที่ตำแหน่ง i
             if (letter >= 0x0E00 && letter <= 0x0E7F) { // ช่วงรหัสอักขระไทย รวมสระ วรรณยุกต์ และเลขไทย
-                throw new IllegalArgumentException("รหัสผ่านห้ามใช้ภาษาไทย"); // หยุดทันที ไม่บันทึกบัญชีนี้
+                throw new IllegalArgumentException("Avoid using thai alphabets"); // หยุดทันที ไม่บันทึกบัญชีนี้
             } // จบการตรวจอักขระไทย
         } // จบการวนตรวจรหัสผ่าน
 
         username = username.trim(); // ตัดช่องว่างหน้าและหลังชื่อ
         if (username.indexOf(',') >= 0 || username.indexOf('\r') >= 0 || username.indexOf('\n') >= 0) { // ตรวจตัวคั่นที่ทำให้ชื่อเสียรูปแบบ CSV
-            throw new IllegalArgumentException("ชื่อผู้ใช้ห้ามมีจุลภาคหรือขึ้นบรรทัดใหม่"); // แจ้งเฉพาะปัญหาชื่อ
+            throw new IllegalArgumentException("username must not have commma , and newline"); // แจ้งเฉพาะปัญหาชื่อ
         } // จบการตรวจรูปแบบชื่อ
         if (password.indexOf('\r') >= 0 || password.indexOf('\n') >= 0) { // รหัสต้องอยู่บรรทัดเดียว ส่วนสัญลักษณ์ใช้ได้
-            throw new IllegalArgumentException("รหัสผ่านห้ามขึ้นบรรทัดใหม่"); // แจ้งเฉพาะปัญหารหัส
+            throw new IllegalArgumentException("password must not newline"); // แจ้งเฉพาะปัญหารหัส
         } // จบการตรวจรูปแบบรหัส
 
         // ── ตรวจชื่อซ้ำ: แจ้งชื่อซ้ำแยกจากปัญหารหัสผ่าน ──
@@ -89,7 +91,7 @@ public class RegisterFrame extends JFrame { // สร้างคลาสหน
         } // จบการตรวจรายการบัญชี
         for (User user : users) { // ตรวจบัญชีทีละคน
             if (user != null && username.equals(user.getUsername())) { // ถ้าชื่อเหมือนบัญชีที่มีอยู่แล้ว
-                throw new IllegalArgumentException("ชื่อผู้ใช้นี้มีอยู่แล้ว กรุณาใช้ชื่ออื่น"); // หยุดสมัครและแจ้งว่าชื่อซ้ำ
+                throw new IllegalArgumentException("username already existed please use a new username"); // หยุดสมัครและแจ้งว่าชื่อซ้ำ
             } // จบการตรวจชื่อซ้ำ
         } // จบการวนบัญชี
 
